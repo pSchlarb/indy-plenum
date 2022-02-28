@@ -1,14 +1,15 @@
 name: indy-plenum-build
 on:
-  push:
-    branches:
-      # - master
-      - ubuntu-20.04-upgrade
+  workflow_dispatch
+#   push:
+#     branches:
+#       # - master
+#       - ubuntu-20.04-upgrade
 
-  pull_request:
-    branches:
-      # - master
-      - ubuntu-20.04-upgrade
+#   pull_request:
+#     branches:
+#       # - master
+#       - ubuntu-20.04-upgrade
             
 jobs:
   workflow-setup:
