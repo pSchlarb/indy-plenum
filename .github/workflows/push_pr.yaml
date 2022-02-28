@@ -126,3 +126,14 @@ jobs:
     with:
       GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
       UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+
+  build_packages:
+    name: Build Packages
+    needs: [workflow-setup, plenum_tests]
+    uses: ./.github/workflows/buildpackages.yaml
+    with:
+      GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
+      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+      isDev: ${{ needs.workflow-setup.outputs.isDev }}
+      isRC: ${{ needs.workflow-setup.outputs.isRC }}
+
