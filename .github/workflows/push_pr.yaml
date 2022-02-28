@@ -137,3 +137,15 @@ jobs:
       isDev: ${{ needs.workflow-setup.outputs.isDev }}
       isRC: ${{ needs.workflow-setup.outputs.isRC }}
 
+  publish_artifacts:
+    name: Publish Artifacts
+    needs: [workflow-setup, build_packages]
+    if: needs.workflow-setup.outputs.publish == 'true'
+    uses: ./.github/workflows/publish_artifacts.yaml
+    with:
+      GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
+      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+      distribution: ${{ needs.workflow-setup.outputs.distribution }}
+    secrets:
+      INDY_ARTIFACTORY_REPO_CONFIG: ${{ secrets.INDY_ARTIFACTORY_REPO_CONFIG }}
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
