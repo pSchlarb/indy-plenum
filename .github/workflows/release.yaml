@@ -1,0 +1,16 @@
+name: Indy Plenum - Release Workflow
+on:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    name: Test Trigger of Release
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Run started from published and dump github event context"
+      - run: echo '${{toJSON(github.event)}}'
+#      - name: Teststepif
+#       if: 
+
