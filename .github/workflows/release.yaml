@@ -11,6 +11,7 @@ jobs:
       - run: |
           echo "Run started from published and dump github event context"
       - run: echo '${{toJSON(github.event)}}'
-#      - name: Teststepif
-#       if: 
+      - name: Teststepif
+        if: ${{ github.event.release.prerelease == true }}
+        run: echo "Prerelease checked true"
 
