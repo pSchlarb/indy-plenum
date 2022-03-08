@@ -44,6 +44,7 @@ runs:
 
         if [ ${{ inputs.isDev }} == "true" ] || [ ${{ inputs.isRC }} == "true" ]; then
           if [ ${{ inputs.isDev }} == "true" ]; then
+            pre="dev"
             rev=${{ github.run_number }}
           else
             rev=${revision}

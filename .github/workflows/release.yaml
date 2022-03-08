@@ -4,16 +4,16 @@ on:
     types: [published]
 
 jobs:
-  test:
-    name: Test Trigger of Release
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "Run started from published and dump github event context"
-      - run: echo '${{toJSON(github.event)}}'
-      - name: Teststepif
-        if: ${{ github.event.release.prerelease == true }}
-        run: echo "Prerelease checked true"
+  # test:
+  #   name: Test Trigger of Release
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: |
+  #         echo "Run started from published and dump github event context"
+  #     - run: echo '${{toJSON(github.event)}}'
+  #     - name: Teststepif
+  #       if: ${{ github.event.release.prerelease == true }}
+  #       run: echo "Prerelease checked true"
   
   workflow-setup:
     name: Initialize Workflow
@@ -129,25 +129,57 @@ jobs:
   #     GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
   #     UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
 
-  build_packages:
-    name: Build Packages
+  # build_packages:
+  #   name: Build Packages
+  #   needs: [workflow-setup, build-docker-image]
+  #   uses: ./.github/workflows/buildpackages.yaml
+  #   with:
+  #     GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
+  #     UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+  #     isDev: ${{ needs.workflow-setup.outputs.isDev }}
+  #     isRC: ${{ needs.workflow-setup.outputs.isRC }}
+
+  bump_version:
+    name: Bump Version Number
     needs: [workflow-setup, build-docker-image]
-    uses: ./.github/workflows/buildpackages.yaml
-    with:
-      GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
+    runs-on: ubuntu-20.04
+    env:
       UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-      isDev: ${{ needs.workflow-setup.outputs.isDev }}
-      isRC: ${{ needs.workflow-setup.outputs.isRC }}
+    container:
+      image: ghcr.io/${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}/plenum-build:${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
 
+      - name: Set Build Version
+        id: version
+        uses: ./.github/actions/set-version
+        with:
+          moduleName: plenum
+          isDev: ${{  needs.workflow-setup.outputs.isDev }}
+          isRC: ${{ needs.workflow-setup.outputs.isRC }}
 
-  publish_artifacts:
-    name: Publish Artifacts
-    needs: [workflow-setup, build_packages]
-    if: needs.workflow-setup.outputs.publish == 'true'
-    uses: ./.github/workflows/publishtestpypi.yaml
-    with:
-      GITHUB_REF: ${{ needs.workflow-setup.outputs.GITHUB_REF }}
-      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-      distribution: ${{ needs.workflow-setup.outputs.distribution }}
-    secrets:
-      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Prepare package and set version
+        run: |
+          ./build-scripts/${{ env.UBUNTU_VERSION }}/prepare-package.sh . plenum "${{ steps.version.outputs.upstreamVer }}" python-packages
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: Update Version number
+          title: Update Version number
+          body: Update Version number after release 
+          branch: update-version
+          base: newGhaWf
+
+  # publish_artifacts:
+  #   name: Publish Artifacts
+  #   needs: [workflow-setup, build_packages]
+  #   if: needs.workflow-setup.outputs.publish == 'true'
+  #   uses: ./.github/workflows/publishtestpypi.yaml
+  #   with:
+  #     GITHUB_REF: ${{ needs.workflow-setup.outputs.GITHUB_REF }}
+  #     UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+  #     distribution: ${{ needs.workflow-setup.outputs.distribution }}
+  #   secrets:
+  #     PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
