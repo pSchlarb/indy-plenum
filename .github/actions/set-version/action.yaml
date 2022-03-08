@@ -47,6 +47,7 @@ runs:
             pre="dev"
             rev=${{ github.run_number }}
           else
+            pre="rc"
             rev=${revision}
           fi
 

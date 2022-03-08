@@ -162,6 +162,7 @@ jobs:
       - name: Prepare package and set version
         run: |
           ./build-scripts/${{ env.UBUNTU_VERSION }}/prepare-package.sh . plenum "${{ steps.version.outputs.upstreamVer }}" python-packages
+          rm plenum/__manifest__.json
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
