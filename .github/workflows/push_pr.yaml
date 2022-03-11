@@ -4,15 +4,11 @@ on:
     branches:
       # - master
       - ubuntu-20.04-upgrade
-    paths-ignore:
-      - 'plenum/__version_.json'
 
   pull_request:
     branches:
       # - master
        - ubuntu-20.04-upgrade
-    paths-ignore:
-      - 'plenum/__version_.json'
             
 jobs:
   workflow-setup:
@@ -31,6 +27,7 @@ jobs:
       isDev: ${{ steps.build-flags.outputs.isDev }}
       isRC: ${{ steps.build-flags.outputs.isRC }}
       publish: ${{ steps.build-flags.outputs.publish }}
+      version: ${{ steps.cache.outputs.version }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
@@ -58,8 +55,9 @@ jobs:
 
           if [[ "${{github.base_ref}}" == 'master' || "${{github.ref}}" == 'refs/heads/master' || "${{github.base_ref}}" == 'main' || "${{github.ref}}" == 'refs/heads/main' ]]; then
             echo "::set-output name=GITHUB_REF::main"
-          elif [[ "${{github.base_ref}}" == 'release*' || "${{github.ref}}" == 'refs/heads/release*' ]]; then
+          elif [[ $(grep -oP "\[\d+.\d+.\d+rc\d+\]" <<< "${{github.event.pull_request.title}}") ]]; then
             echo "::set-output name=GITHUB_REF::rc"
+            echo ::set-output\ name=version::$(grep -oP "\d+.\d+.\d+rc\d+" <<< "${{github.event.pull_request.title}}") 
           elif [[ "${{github.base_ref}}" == 'stable' || "${{github.ref}}" == 'refs/heads/stable' ]]; then
             echo "::set-output name=GITHUB_REF::stable"
           else
@@ -123,7 +121,7 @@ jobs:
   bump_version:
     name: Bump Version Number
     needs: [workflow-setup, build-docker-image]
-    if: ${{ github.event_name == 'push' }}
+    if: needs.workflow-setup.outputs.isRC == 'true' && github.event_name == 'pull_request'
     runs-on: ubuntu-20.04
     env:
       UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
@@ -133,27 +131,19 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Set Build Version
-        id: version
-        uses: ./.github/actions/set-version
-        with:
-          moduleName: plenum
-          isDev: ${{  needs.workflow-setup.outputs.isDev }}
-          isRC: ${{ needs.workflow-setup.outputs.isRC }}
-
       - name: Prepare package and set version
         run: |
-          ./build-scripts/${{ env.UBUNTU_VERSION }}/prepare-package.sh . plenum "${{ steps.version.outputs.upstreamVer }}" python-packages
+          ./build-scripts/${{ env.UBUNTU_VERSION }}/prepare-package.sh . plenum "${{ needs.workflow-setup.outputs.version }}" python-packages
           rm plenum/__manifest__.json
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          commit-message: Update Version number
+          commit-message: Update Version number to match specified 
           title: Update Version number
-          body: Update Version number after release 
+          body: Update Version number to match specified in PR Title
           branch: update-version
-          base: ubuntu-20.04-upgrade
+          base: ${{ github.head_ref }}
 
   plenum_tests:
     name: Test Plenum
