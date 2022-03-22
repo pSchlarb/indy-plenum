@@ -13,8 +13,6 @@ jobs:
       VERSION: ${{ steps.version.outputs.VERSION }}
       BASE: ${{ steps.branch.outputs.BASE}}
     steps:
-      - name: Echo infos
-        run: echo '${{toJSON(github)}}'
       - name: checkout source code
         uses: actions/checkout@v1
       - name: extract branch 
@@ -53,10 +51,14 @@ jobs:
         if: contains(needs.taginfos.outputs.VERSION, 'rc')
         uses: peter-evans/create-pull-request@v3
         with:
+          author: ${{ github.actor }} <${{ github.event.pusher.email }}>
+          committer: ${{ github.actor }} <${{ github.event.pusher.email }}>
           commit-message: Update Version number for Prerelease
           title: Update Version number for RC[v${{ needs.taginfos.outputs.VERSION }}]
           body: Update Version number for RC[v${{ needs.taginfos.outputs.VERSION }}]
           branch: update-rc-version
+          signoff: true
+          delete-branch: true
           base: ${{ needs.taginfos.outputs.BASE }}
           token: ${{ secrets.BOT_PR_PAT }}
     
@@ -64,10 +66,14 @@ jobs:
         if:  ${{!contains(needs.taginfos.outputs.VERSION, 'rc')}}
         uses: peter-evans/create-pull-request@v3
         with:
+          author: ${{ github.actor }} <${{ github.event.pusher.email }}>
+          committer: ${{ github.actor }} <${{ github.event.pusher.email }}>
           commit-message: Update Version number for Release
           title: Update Version number for [v${{ needs.taginfos.outputs.VERSION }}]
           body: Update Version number for [v${{ needs.taginfos.outputs.VERSION }}]
           branch: update-version
+          signoff: true
+          delete-branch: true
           base: ${{ needs.taginfos.outputs.BASE }}
           token: ${{ secrets.BOT_PR_PAT }}
     
