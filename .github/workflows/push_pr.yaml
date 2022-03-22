@@ -117,34 +117,7 @@ jobs:
       CACHE_KEY_BUILD: ${{ needs.workflow-setup.outputs.CACHE_KEY_BUILD }}
       GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
       UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-
-  bump_version:
-    name: Bump Version Number
-    needs: [workflow-setup, build-docker-image]
-    if: needs.workflow-setup.outputs.isRC == 'true' && github.event_name == 'pull_request'
-    runs-on: ubuntu-20.04
-    env:
-      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-    container:
-      image: ghcr.io/${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}/plenum-build:${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Prepare package and set version
-        run: |
-          ./build-scripts/${{ env.UBUNTU_VERSION }}/prepare-package.sh . plenum "${{ needs.workflow-setup.outputs.version }}" python-packages
-          rm plenum/__manifest__.json
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
-        with:
-          commit-message: Update Version number to match specified 
-          title: Update Version number
-          body: Update Version number to match specified in PR Title
-          branch: update-version
-          base: ${{ github.head_ref }}
-
+      
   plenum_tests:
     name: Test Plenum
     needs: [workflow-setup, lint, build-docker-image]
