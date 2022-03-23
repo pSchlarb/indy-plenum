@@ -1,0 +1,80 @@
+name: "Get Release Info"
+description: "Gets the release version and meta data from a string containing a verison number in the form <Major>.<Minor>.<Patch>[[-]rc<Num>]."
+
+inputs:
+  versionString:
+    description: "A string containing a version number in the form <Major>.<Minor>.<Patch>[[-]rc<Num>]."
+    required: true
+    default: ""
+
+outputs:
+  version:
+    description: "The version number extracted from the string."
+    value: ${{ steps.version-info.outputs.version }}
+  versionTag:
+    description: "The version tag for the release."
+    value: ${{ steps.version-info.outputs.versionTag }}
+  isRC:
+    description: "A flag indicating whether or not the version is an RC version."
+    value: ${{ steps.version-info.outputs.isRC }}
+  prBranch:
+    description: "The branch to use for updating the version number."
+    value: ${{ steps.version-info.outputs.prBranch }}
+  isVersionBump:
+    description: "A flag indicating whether or not the version is associated with a version bump tag; '[v'<Major>.<Minor>.<Patch>[[-]rc<Num>]']'"
+    value: ${{ steps.version-info.outputs.isVersionBump }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get Release Version
+      id: version-info
+      shell: bash
+      run: |
+        # Defaults
+        echo "Setting defaults ..."
+        version=""
+        versionTag=""
+        isRC=""
+        prBranch=""
+        isVersionBump=""
+
+        echo "Parsing version ..."
+        version=$(grep -oP "\d+.\d+.\d+(-?rc\d+)?" <<< "${{ inputs.versionString }}")
+        echo "Version: ${version}"
+        
+        if [[ ! -z ${version}  ]]; then
+
+          echo "Version Set ..."
+
+          versionTag="v${version}"
+          if [[ "${version}" == *'rc'* ]]; then
+            isRC=true
+            prBranch=update-rc-version
+          else
+            isRC=false
+            prBranch=update-version
+          fi
+
+          # Check to see if the version number is an indication of a version bump.
+          if [[ $(grep -oP "\[v\d+.\d+.\d+(-?rc\d+)?\]" <<< "${{ inputs.versionString }}") ]]; then
+            isVersionBump=true
+          else
+            isVersionBump=false
+          fi
+        fi
+
+        # Set Outputs ...
+        
+        echo "Setting outputs ..."
+        echo "version: ${version}"
+        echo "versionTag: ${versionTag}"
+        echo "isRC: ${isRC}"
+        echo "prBranch: ${prBranch}"
+        echo "isVersionBump: ${isVersionBump}"
+
+        echo "::set-output name=version::${version}"
+        echo "::set-output name=versionTag::${versionTag}"
+        echo "::set-output name=isRC::${isRC}"
+        echo "::set-output name=prBranch::${prBranch}"
+        echo "::set-output name=isVersionBump::${isVersionBump}"

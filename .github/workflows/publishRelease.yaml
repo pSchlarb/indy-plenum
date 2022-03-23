@@ -15,27 +15,16 @@ jobs:
     name: infos
     runs-on: ubuntu-latest
     outputs:
-      isVersionBump: ${{ steps.extractInfos.outputs.isVersionBump }}
-      isPreRelease: ${{ steps.extractInfos.outputs.isPreRelease }}
-      VERSIONTAG: ${{ steps.extractInfos.outputs.VERSIONTAG }}
+      isVersionBump: ${{ steps.get-release-info.outputs.isVersionBump }}
+      isPreRelease: ${{ steps.get-release-info.outputs.isRC }}
+      versionTag: ${{ steps.get-release-info.outputs.versionTag }}
     steps:
-      - name: Extract needed infos
-        id: extractInfos
-        run: |
-          printf "${{github.event.head_commit.message}}" > temp.txt
-
-          if [[ $(grep -oP "\[v\d+.\d+.\d+rc\d+\]" temp.txt) ||   $(grep -oP "\[v\d+.\d+.\d+\]" temp.txt) ]]; then
-            echo ::set-output\ name=isVersionBump::true
-            
-            if [[ $(grep -oP "\[v\d+.\d+.\d+rc\d+\]" temp.txt) ]] ; then
-              echo ::set-output\ name=isPreRelease::true
-              versionTag=$(grep -oP "v\d+.\d+.\d+rc\d+" temp.txt)
-            else
-              echo ::set-output\ name=isPreRelease::false
-              versionTag=$(grep -oP "v\d+.\d+.\d+" temp.txt)
-            fi
-            echo ::set-output\ name=VERSIONTAG::$versionTag
-          fi
+      - name: get-release-info
+        id: get-release-info
+        uses: ./.github/actions/get-release-info
+        with:
+          versionString: "${{ github.event.head_commit.message }}"
+          
   workflow-setup:
     name: Initialize Workflow
     runs-on: ubuntu-latest

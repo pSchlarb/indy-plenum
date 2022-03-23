@@ -10,7 +10,9 @@ jobs:
     name: Print github context infos to get Tag infos
     runs-on: ubuntu-latest
     outputs:
-      VERSION: ${{ steps.version.outputs.VERSION }}
+      version: ${{ steps.get-release-info.outputs.version }}
+      versionTag: ${{ steps.get-release-info.outputs.versionTag }}
+      prBranch: ${{ steps.get-release-info.outputs.prBranch }}
       BASE: ${{ steps.branch.outputs.BASE}}
     steps:
       - name: checkout source code
@@ -22,17 +24,11 @@ jobs:
           branch=${raw/origin\/}
           echo ::set-output\ name=BASE::$branch
           echo "::debug::BASE is being set to $branch"
-      - name: extract version 
-        id: version
-        run: |
-          if [[ $(grep -oP "\d+.\d+.\d+rc\d+" <<< "${{github.ref}}") ]]; then
-            version=$(grep -oP "\d+.\d+.\d+rc\d+" <<< "${{github.ref}}")
-          elif [[ $(grep -oP "\d+.\d+.\d+" <<< "${{github.ref}}") ]];then
-            version=$(grep -oP "\d+.\d+.\d+" <<< "${{github.ref}}")
-          fi
-          
-          echo ::set-output\ name=VERSION::$version
-          echo '::debug::VERSION is being set to $version'
+      - name: get-release-info
+        id: get-release-info
+        uses: ./.github/actions/get-release-info
+        with:
+          versionString: "${{ github.ref }}"
 
 
   bump_version:
