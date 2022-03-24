@@ -99,7 +99,6 @@ jobs:
 
       - name: PreRelease
         uses: softprops/action-gh-release@v1
-        if: needs.infos.outputs.isPreRelease == 'true'
         with:
           tag_name: ${{ needs.infos.outputs.VERSIONTAG }}
           prerelease: true
@@ -107,20 +106,7 @@ jobs:
             artifacts/**
           generate_release_notes: true
           body: "[${{ needs.infos.outputs.VERSIONTAG }}] "
-          target_commitish: ${{github.event.ref}}
-          name: "${{ needs.infos.outputs.VERSIONTAG }}"
-          token: ${{ secrets.BOT_PR_PAT }}
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        if: needs.infos.outputs.isPreRelease == 'false'
-        with:
-          tag_name: ${{ needs.infos.outputs.VERSIONTAG }}
-          prerelease: false
-          generate_release_notes: true
-          files: |
-            artifacts/**
-          body: "[${{ needs.infos.outputs.VERSIONTAG }}] "
+          prerelease: ${{ needs.infos.outputs.isPreRelease }}
           target_commitish: ${{github.event.ref}}
           name: "${{ needs.infos.outputs.VERSIONTAG }}"
           token: ${{ secrets.BOT_PR_PAT }}
@@ -144,7 +130,7 @@ jobs:
     if: needs.infos.isPreRelease == 'false'
     uses: ./.github/workflows/reuseable_publish_artifacts.yaml
     with:
-      COMPONENT: 'main'
+      COMPONENT: 'stable'
       UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
       distribution: ${{ needs.workflow-setup.outputs.distribution }}
     secrets:
