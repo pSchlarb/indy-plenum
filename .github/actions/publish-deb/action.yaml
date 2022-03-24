@@ -11,7 +11,7 @@ inputs:
     description: "The distribution supported by the package. i.e xenial, focal, etc."
     required: true
   component:
-    description: "The component type.  i.e. stable, rc, dev, etc."
+    description: "The component type.  i.e. stable, rc, dev, main."
     required: true
 
 runs:

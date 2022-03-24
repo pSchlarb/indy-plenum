@@ -3,7 +3,8 @@ name: "Publish Artifacts"
 on:
   workflow_call:
     inputs:
-      GITHUB_REF:
+      COMPONENT:
+        description: "The component type.  i.e. stable, rc, dev, main."
         required: true
         type: string
       UBUNTU_VERSION:
@@ -24,7 +25,7 @@ jobs:
     name: Publish Artifacts
     runs-on: ubuntu-20.04
     env:
-      GITHUB_REF: ${{ inputs.GITHUB_REF }}
+      COMPONENT: ${{ inputs.COMPONENT }}
       UBUNTU_VERSION: ${{ inputs.UBUNTU_VERSION }}
     steps:
       - name: Check out code
@@ -52,7 +53,7 @@ jobs:
         with:
           sourceDirectory: /home/runner/work/indy-plenum/indy-plenum/to_publish
           distribution: ${{ inputs.distribution }}
-          component: ${{ env.GITHUB_REF }}
+          component: ${{ env.COMPONENT }}
 
       - name: Download 3rd Party Artifacts Dependencies from Cache
         id: third-party-dependencies
@@ -66,7 +67,7 @@ jobs:
         with:
           sourceDirectory: /home/runner/tmp/third-party-dependencies
           distribution: ${{ inputs.distribution }}
-          component: ${{ env.GITHUB_REF }}
+          component: ${{ env.COMPONENT }}
 
       - name: Download Python Packages from Pipeline Artifacts
         uses: actions/download-artifact@v2
