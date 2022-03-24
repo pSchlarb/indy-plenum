@@ -75,4 +75,4 @@ jobs:
       GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
       UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
       isDev: 'false'
-      isRC: ${{ needs.infos.outputs.isPreRelease }}
+      isRC: '${{ needs.infos.outputs.isPreRelease }}'

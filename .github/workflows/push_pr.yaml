@@ -59,8 +59,8 @@ jobs:
     with:
       GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
       UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-      isDev: ${{ needs.workflow-setup.outputs.isDev }}
-      isRC: ${{ needs.workflow-setup.outputs.isRC }}
+      isDev: 'true'
+      isRC: 'false'
 
   publish_artifacts:
     name: Publish Artifacts
