@@ -11,27 +11,14 @@ on:
       - "plenum/__version__.json"
 
 jobs:
-  infos:
-    name: infos
+  release-infos:
+    name: release-infos
     runs-on: ubuntu-latest
     outputs:
       isVersionBump: ${{ steps.get-release-info.outputs.isVersionBump }}
       isPreRelease: ${{ steps.get-release-info.outputs.isRC }}
       versionTag: ${{ steps.get-release-info.outputs.versionTag }}
       component: ${{ steps.get-release-info.outputs.component}}
-    steps:
-      - name: checkout source code
-        uses: actions/checkout@v2
-      - name: get-release-info
-        id: get-release-info
-        uses: ./.github/actions/get-release-info
-        with:
-          versionString: "${{ github.event.head_commit.message }}"
-          
-  workflow-setup:
-    name: Initialize Workflow
-    runs-on: ubuntu-latest
-    outputs:
       CACHE_KEY_BUILD: ${{ steps.workflow-setup.outputs.CACHE_KEY_BUILD }}
       UBUNTU_VERSION: ${{ steps.workflow-setup.outputs.UBUNTU_VERSION }}
       # Expose the lowercase version of the GitHub repository name
@@ -43,20 +30,26 @@ jobs:
     steps:
       - name: checkout source code
         uses: actions/checkout@v2
+      - name: get-release-info
+        id: get-release-info
+        uses: ./.github/actions/get-release-info
+        with:
+          versionString: "${{ github.event.head_commit.message }}"
       - name: workflow-setup
         id: workflow-setup
         uses: ./.github/actions/workflow-setup
+          
 
   lint:
     name: Lint
-    needs: [infos]
+    needs: [release-infos]
     if: needs.infos.outputs.isVersionBump == 'true'
     uses: ./.github/workflows/reuseable_lint.yaml
 
 
   build-docker-image:
     name: Create Builder Image
-    needs: [workflow-setup, lint, infos]
+    needs: [lint, release-infos]
     if: needs.infos.outputs.isVersionBump == 'true'
     uses: ./.github/workflows/reuseable_buildimage.yaml
     with:
@@ -66,7 +59,7 @@ jobs:
 
   plenum_tests:
     name: Test Plenum
-    needs: [workflow-setup, infos ,lint, build-docker-image]
+    needs: [release-infos, lint, build-docker-image]
     if: needs.infos.outputs.isVersionBump == 'true'
     uses: ./.github/workflows/reuseable_test.yaml
     with:
@@ -75,7 +68,7 @@ jobs:
 
   build_packages:
     name: Build Packages
-    needs: [workflow-setup, plenum_tests]
+    needs: [release-infos, plenum_tests]
     if: needs.infos.outputs.isVersionBump == 'true'
     uses: ./.github/workflows/reuseable_buildpackages.yaml
     with:
@@ -86,7 +79,7 @@ jobs:
 
   createRelease:
     name: Create Release
-    needs: [infos, build_packages]
+    needs: [release-infos, build_packages]
     if: needs.infos.outputs.isVersionBump == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -114,7 +107,7 @@ jobs:
 
   publish_artifacts:
     name: Publish Artifacts
-    needs: [workflow-setup, infos ,build_packages]
+    needs: [release-infos, build_packages]
     if: needs.infos.isPreRelease == 'true'
     uses: ./.github/workflows/reuseable_publish_artifacts.yaml
     with:
