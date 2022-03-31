@@ -7,7 +7,7 @@ on:
 
 jobs:
   taginfos:
-    name: Print github context infos to get Tag infos
+    name: get Tag infos
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-release-info.outputs.version }}
@@ -26,7 +26,7 @@ jobs:
           echo "::debug::BASE is being set to $branch"
       - name: get-release-info
         id: get-release-info
-        uses: ./.github/actions/get-release-info
+        uses: pschlarb/indy-shared-gha/.github/actions/get-release-info@parametrization
         with:
           versionString: "${{ github.ref }}"
 
@@ -49,32 +49,16 @@ jobs:
           ./bump_version.sh ${{ needs.taginfos.outputs.VERSION }}
 
       - name: Create Pull Request
-        if: contains(needs.taginfos.outputs.VERSION, 'rc')
         uses: peter-evans/create-pull-request@v3
         with:
           author: ${{ github.actor }} <${{ github.event.pusher.email }}>
           committer: ${{ github.actor }} <${{ github.event.pusher.email }}>
-          commit-message: Update Version number for Prerelease
-          title: Update Version number for RC[v${{ needs.taginfos.outputs.VERSION }}]
-          body: Update Version number for RC[v${{ needs.taginfos.outputs.VERSION }}]
-          branch: update-rc-version
           signoff: true
-          delete-branch: true
+          commit-message: Update Version number for v${{ needs.taginfos.outputs.version }}
           base: ${{ needs.taginfos.outputs.BASE }}
-          token: ${{ secrets.BOT_PR_PAT }}
-    
-      - name: Create Pull Request
-        if:  ${{!contains(needs.taginfos.outputs.VERSION, 'rc')}}
-        uses: peter-evans/create-pull-request@v3
-        with:
-          author: ${{ github.actor }} <${{ github.event.pusher.email }}>
-          committer: ${{ github.actor }} <${{ github.event.pusher.email }}>
-          commit-message: Update Version number for Release
-          title: Update Version number for [v${{ needs.taginfos.outputs.VERSION }}]
-          body: Update Version number for [v${{ needs.taginfos.outputs.VERSION }}]
-          branch: update-version
-          signoff: true
+          branch: ${{ needs.taginfos.outputs.prBranch }}
+          title: "[${{ needs.taginfos.outputs.versionTag }}] - Update Version Number for Release"
+          body: "[${{ needs.taginfos.outputs.versionTag }}] - Update Version number for Release"
           delete-branch: true
-          base: ${{ needs.taginfos.outputs.BASE }}
-          token: ${{ secrets.BOT_PR_PAT }}
+          token: ${{ secrets.NEOBOT_PR_PAT }}
     
