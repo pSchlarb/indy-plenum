@@ -32,55 +32,54 @@ jobs:
         uses: actions/checkout@v2
       - name: get-release-info
         id: get-release-info
-        uses: ./.github/actions/get-release-info
+        uses: pschlarb/indy-shared-gha/.github/actions/get-release-info@parametrization
         with:
           versionString: "${{ github.event.head_commit.message }}"
       - name: workflow-setup
         id: workflow-setup
-        uses: ./.github/actions/workflow-setup
+        uses: pschlarb/indy-shared-gha/.github/actions/workflow-setup@parametrization
           
 
   lint:
     name: Lint
     needs: [release-infos]
-    if: needs.infos.outputs.isVersionBump == 'true'
-    uses: ./.github/workflows/reuseable_lint.yaml
-
+    if: needs.release-infos.outputs.isVersionBump == 'true'
+    uses: pschlarb/indy-shared-gha/.github/workflows/lint.yaml@parametrization
 
   build-docker-image:
     name: Create Builder Image
-    needs: [lint, release-infos]
-    if: needs.infos.outputs.isVersionBump == 'true'
-    uses: ./.github/workflows/reuseable_buildimage.yaml
+    needs: [release-infos, lint]
+    if: needs.release-infos.outputs.isVersionBump == 'true'
+    uses:  pschlarb/indy-shared-gha/.github/workflows/buildimage.yaml@parametrization
     with:
-      CACHE_KEY_BUILD: ${{ needs.workflow-setup.outputs.CACHE_KEY_BUILD }}
-      GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
-      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-
+      CACHE_KEY_BUILD: ${{ needs.release-infos.outputs.CACHE_KEY_BUILD }}
+      DOCKER_IMAGE: ghcr.io/${{  needs.release-infos.outputs.GITHUB_REPOSITORY_NAME }}/plenum-build
+      UBUNTU_VERSION: ${{ needs.release-infos.outputs.UBUNTU_VERSION }}
+      
   plenum_tests:
     name: Test Plenum
     needs: [release-infos, lint, build-docker-image]
-    if: needs.infos.outputs.isVersionBump == 'true'
+    if: needs.release-infos.outputs.isVersionBump == 'true'
     uses: ./.github/workflows/reuseable_test.yaml
     with:
-      GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
-      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+      GITHUB_REPOSITORY_NAME: ${{ needs.release-infos.outputs.GITHUB_REPOSITORY_NAME }}
+      UBUNTU_VERSION: ${{ needs.release-infos.outputs.UBUNTU_VERSION }}
 
   build_packages:
     name: Build Packages
     needs: [release-infos, plenum_tests]
-    if: needs.infos.outputs.isVersionBump == 'true'
-    uses: ./.github/workflows/reuseable_buildpackages.yaml
+    if: needs.release-infos.outputs.isVersionBump == 'true'
+    uses: pschlarb/indy-shared-gha/.github/workflows/buildpackages.yaml@parametrization
     with:
-      GITHUB_REPOSITORY_NAME: ${{ needs.workflow-setup.outputs.GITHUB_REPOSITORY_NAME }}
-      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
+      DOCKER_IMAGE: ghcr.io/${{ needs.release-infos.outputs.GITHUB_REPOSITORY_NAME }}/plenum-build:${{ needs.release-infos.outputs.UBUNTU_VERSION }}
+      UBUNTU_VERSION: ${{ needs.release-infos.outputs.UBUNTU_VERSION }}
       isDev: 'false'
-      isRC: '${{ needs.infos.outputs.isPreRelease }}'
+      isRC: '${{ needs.release-infos.outputs.isPreRelease }}'
 
   createRelease:
     name: Create Release
     needs: [release-infos, build_packages]
-    if: needs.infos.outputs.isVersionBump == 'true'
+    if: needs.release-infos.outputs.isVersionBump == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -94,26 +93,25 @@ jobs:
       - name: PreRelease
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ needs.infos.outputs.VERSIONTAG }}
-          prerelease: true
+          tag_name: ${{ needs.release-infos.outputs.VERSIONTAG }}
           files: |
             artifacts/**
           generate_release_notes: true
-          body: "[${{ needs.infos.outputs.VERSIONTAG }}] "
-          prerelease: ${{ needs.infos.outputs.isPreRelease }}
+          body: "[${{ needs.release-infos.outputs.VERSIONTAG }}] "
+          prerelease: ${{ needs.release-infos.outputs.isPreRelease }}
           target_commitish: ${{github.event.ref}}
-          name: "${{ needs.infos.outputs.VERSIONTAG }}"
+          name: "${{ needs.release-infos.outputs.VERSIONTAG }}"
           token: ${{ secrets.BOT_PR_PAT }}
 
   publish_artifacts:
     name: Publish Artifacts
     needs: [release-infos, build_packages]
-    if: needs.infos.isPreRelease == 'true'
-    uses: ./.github/workflows/reuseable_publish_artifacts.yaml
+    if: needs.release-infos.outputs.isVersionBump == 'true'
+    uses: pschlarb/indy-shared-gha/.github/workflows/publish_artifacts.yaml@parametrization
     with:
-      COMPONENT: ${{ needs.infos.component }}
-      UBUNTU_VERSION: ${{ needs.workflow-setup.outputs.UBUNTU_VERSION }}
-      distribution: ${{ needs.workflow-setup.outputs.distribution }}
+      COMPONENT: ${{ needs.release-infos.component }}
+      UBUNTU_VERSION: ${{ needs.release-infos.outputs.UBUNTU_VERSION }}
+      distribution: ${{ needs.release-infos.outputs.distribution }}
     secrets:
       INDY_ARTIFACTORY_REPO_CONFIG: ${{ secrets.INDY_ARTIFACTORY_REPO_CONFIG }}
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

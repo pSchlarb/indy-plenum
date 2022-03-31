@@ -7,7 +7,7 @@ on:
 
 jobs:
   taginfos:
-    name: Print github context infos to get Tag infos
+    name: get Tag infos
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get-release-info.outputs.version }}
@@ -26,7 +26,7 @@ jobs:
           echo "::debug::BASE is being set to $branch"
       - name: get-release-info
         id: get-release-info
-        uses: ./.github/actions/get-release-info
+        uses: pschlarb/indy-shared-gha/.github/actions/get-release-info@parametrization
         with:
           versionString: "${{ github.ref }}"
 
