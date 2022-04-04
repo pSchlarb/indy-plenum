@@ -87,12 +87,17 @@ jobs:
           name: plenum-python
           path: artifacts/plenum-python
           retention-days: 5
+      - name: Zip Files for Release
+        run: |
+          zip -r artifacts/plenum-deb.zip artifacts/plenum-deb
+          zip -r artifacts/plenum-python.zip artifacts/plenum-python
+          zip -r artifacts/third-party-dependencies.zip artifacts/third-party-dependencies
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ needs.release-infos.outputs.VERSIONTAG }}
           files: |
-            artifacts/**
+            artifacts/**.zip
           generate_release_notes: true
           body: "[${{ needs.release-infos.outputs.VERSIONTAG }}] "
           prerelease: ${{ needs.release-infos.outputs.isPreRelease }}
