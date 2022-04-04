@@ -1,7 +1,9 @@
 name: Test Artifacts Download
 
 on:
-  workflow_dispatch:
+  push:
+    tags:        
+      - test**
     
 jobs:
   test:
