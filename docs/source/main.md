@@ -1,5 +1,5 @@
 # Overview of the system
-
+#no triggering changes
 - The system maintains a replicated ordered log of transactions called the ledger. 
 - Participants of the system which maintain this log are called the nodes. The nodes run a consensus protocol ([RBFT](http://lig-membres.imag.fr/aublin/rbft/report.pdf)) to agree on the order of transactions. For simplicity it can be assumed that one of the node is the leader (primary) which determines the order of transactions and communicates it to the rest of the nodes (followers).
 - Each run (3 phase commit) of the consensus protocol orders a batch (collection) of transactions.
