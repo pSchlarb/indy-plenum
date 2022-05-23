@@ -31,6 +31,12 @@ jobs:
       - name: setup
         id: setup
         uses: hyperledger/indy-shared-gha/.github/actions/workflow-setup@v1
+      - name: Status Check pending
+        uses: LouisBrunner/checks-action@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: StatusCheck
+          status: in_progress
 
   lint:
     name: Lint
@@ -63,9 +69,13 @@ jobs:
       isDev: 'true'
       isRC: 'false'
       moduleName: plenum
-  
-  branch_protection_statuscheck:
+
+  statusCheck:
     runs-on: ubuntu-latest
     needs: [build_packages]
     steps:
-     - run: 'echo "Just a status Check (Always true), but only run if packages have been built, for branch protection rules purposes" '
+      - uses: LouisBrunner/checks-action@v1.1.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: StatusCheck
+          conclusion: success
