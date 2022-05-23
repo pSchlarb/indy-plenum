@@ -16,6 +16,6 @@ jobs:
     steps:
       - uses: LouisBrunner/checks-action@v1.1.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.BOT_PR_PAT }}
           name: StatusCheck
           conclusion: success
