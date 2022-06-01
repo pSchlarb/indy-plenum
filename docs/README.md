@@ -1,5 +1,6 @@
 # Documentation README
-Check out the docs at http://hyperledger-indy.readthedocs.io/projects/plenum
+#should not trigger tests.
+Check out the docs at http://hyperledger-.readthedocs.io/projects/plenum
 
 This `docs/` directory should contain all of the documents associated with the repository, with the exception of README files that describe technical details with the directories of code. 
 
