@@ -4,7 +4,7 @@ on:
   push:
     tags:        
       - setRelease-v**
-
+#trigger tests
 jobs:
   taginfos:
     name: get Tag infos
