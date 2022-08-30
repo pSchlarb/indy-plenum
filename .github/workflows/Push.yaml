@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - ubuntu-20.04-upgrade
+      - test-testreport
     paths:
       - '**.py'
       - '.github/**'
