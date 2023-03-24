@@ -129,9 +129,9 @@ jobs:
       - name: Convert to python version flavour
         id: conversion
         run: |
-          pyVersion=$(echo ${{ needs.release-infos.outputs.VERSIONTAG }} | sed 's~v~~g')"
+          pyVersion=$(echo ${{ needs.release-infos.outputs.VERSIONTAG }} | sed 's~v~~g')
           if [[ ${{ needs.release-infos.outputs.VERSIONTAG }} == *"-"* ]]; then
-            pyVersion=$(echo $pyVersion | sed 's~-~.~g')"
+            pyVersion=$(echo $pyVersion | sed 's~-~.~g')
             echo "pyVersion=$pyVersion">> $GITHUB_OUTPUT
           else
             echo "pyVersion=$pyVersion" >> $GITHUB_OUTPUT
@@ -141,5 +141,6 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.BOT_PR_PAT_NODE }}
+          repository: pschlarb/indy-node
           event-type: update-node
-          client-payload: '{"pyVersion": "${{ steps.conversion.outputs.pyVersion }}", "debVersion": "${{ steps.conversion.outputs.debVersion }}"}'
+          client-payload: '{"pyVersion": "${{ steps.conversion.outputs.pyVersion }}", "debVersion": "${{ steps.conversion.outputs.debVersion }}", "email":"${{ github.event.pusher.email }}"}'
