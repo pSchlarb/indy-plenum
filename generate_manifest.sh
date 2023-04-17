@@ -9,6 +9,8 @@ if [ "$1" = "--help" ] ; then
   exit 0
 fi
 
+echo $(ls -lisha)
+echo $(git config -l)
 repourl=$(git config --get remote.origin.url)
 hashcommit=$(git $repo rev-parse HEAD)
 
